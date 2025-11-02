@@ -1,0 +1,9 @@
+{
+	"material-icon-theme.folders.customClones": [
+		{"name": "loader", "base": "download", "color": "amber-600", "folderNames": ["loader", "_loader"]},
+		{"name": "convert", "base": "generator", "color": "lime-800", "folderNames": ["convert", "_convert"]}
+	],
+	"material-icon-theme.files.customClones": [
+		{"name": "main", "base": "go", "color": "indigo-400", "fileNames": ["main.go", "_main.go"]}
+	]
+}

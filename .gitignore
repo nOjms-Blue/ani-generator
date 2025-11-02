@@ -25,3 +25,8 @@ go.work.sum
 # env file
 .env
 
+# test image files
+img/
+image/
+images/
+media/

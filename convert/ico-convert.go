@@ -9,11 +9,12 @@ import (
 
 type ResourceType = uint16
 const (
-	IconResource ResourceType = 1
-	CursorResource ResourceType = 2
+	IconResource ResourceType = 1    // アイコン
+	CursorResource ResourceType = 2  // カーソル
 )
 
 func ConvertImageDataToIcon(image loader.ImageData, resourceType ResourceType) ([]byte, error) {
+	// 画像の幅と高さは32, 64, 128, 256のみサポート
 	if image.Width != 32 && image.Width != 64 && image.Width != 128 && image.Width != 256 {
 		return nil, errors.New("unsupported image width")
 	}
@@ -50,6 +51,7 @@ func ConvertImageDataToIcon(image loader.ImageData, resourceType ResourceType) (
 		BiClrImportant: 0,
 	}
 	
+	// 画像データをピクセルデータに変換
 	pixels := make([]byte, image.Width * image.Height * 4)
 	for y := image.Height - 1; y >= 0; y-- {
 		for x := int64(0); x < image.Width; x++ {
@@ -62,6 +64,8 @@ func ConvertImageDataToIcon(image loader.ImageData, resourceType ResourceType) (
 			pixels[index + 3] = rgba.A
 		}
 	}
+	
+	// アルファマスクを作成
 	i := 0
 	alphaMasks := make([]byte, image.Width / 8 * image.Height)
 	for y := image.Height - 1; y >= 0; y-- {
@@ -82,15 +86,16 @@ func ConvertImageDataToIcon(image loader.ImageData, resourceType ResourceType) (
 		}
 	}
 	
+	// サイズ系を設定
 	iconInfoHeader.IcoDIBSize = uint32(int64(unsafe.Sizeof(BitmapInfoHeader{})) + int64(len(pixels)) + int64(len(alphaMasks)))
 	bitmapInfoHeader.BiSizeImage = uint32(len(pixels)) + uint32(len(alphaMasks))
 	
+	// バイト列を作成
 	bytes := make([]byte, 0)
 	bytes = append(bytes, iconFileHeader.Export()...)
 	bytes = append(bytes, iconInfoHeader.Export()...)
 	bytes = append(bytes, bitmapInfoHeader.Export()...)
 	bytes = append(bytes, pixels...)
 	bytes = append(bytes, alphaMasks...)
-	
 	return bytes, nil
 }

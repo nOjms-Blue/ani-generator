@@ -7,15 +7,15 @@ import (
 
 
 type AniHeader struct {
-	Size        uint32
-	Frames      uint32
-	Steps       uint32
-	Width       uint32
-	Height      uint32
-	BitDepth    uint32
-	Planes      uint32
-	DefaultRate uint32
-	Flags       uint32
+	Size        uint32  // ヘッダのサイズ
+	Frames      uint32  // アイコン数
+	Steps       uint32  // 表示コマ数
+	Width       uint32  // 画像幅     (生データ時のみ)
+	Height      uint32  // 画像高さ   (生データ時のみ)
+	BitDepth    uint32  // ビット深度 (生データ時のみ)
+	Planes      uint32  // プレーン数 (生データ時のみ)
+	DefaultRate uint32  // コマの表示時間のデフォルト値
+	Flags       uint32  // フラグ (bit0: アイコンorカーソルか  bit1: シーケンスデータを含むか)
 }
 
 func (self *AniHeader) Import(bytes []byte) error {

@@ -7,9 +7,9 @@ import (
 
 
 type IconFileHeader struct {
-	IcoReserved      uint16
-	IcoResourceType  uint16
-	IcoResourceCount uint16
+	IcoReserved      uint16  // 予約領域 常に0
+	IcoResourceType  uint16  // リソースタイプ 1: アイコン 2: カーソル
+	IcoResourceCount uint16  // リソース(アイコン)の数
 }
 
 func (self *IconFileHeader) Import(bytes []byte) error {
@@ -31,14 +31,14 @@ func (self IconFileHeader) Export() []byte {
 }
 
 type IconInfoHeader struct {
-	Width            uint8
-	Height           uint8
-	ColorCount       uint8
-	Reserved1        uint8
-	Reserved2        uint16
-	Reserved3        uint16
-	IcoDIBSize       uint32
-	IcoDIBOffset     uint32
+	Width            uint8   // アイコンの幅
+	Height           uint8   // アイコンの高さ
+	ColorCount       uint8   // 使用する色数 (256色以上は 0)
+	Reserved1        uint8   // 予約領域 常に0
+	Reserved2        uint16  // 予約領域 (ホットスポット X座標)
+	Reserved3        uint16  // 予約領域 (ホットスポット Y座標)
+	IcoDIBSize       uint32  // アイコンのサイズ
+	IcoDIBOffset     uint32  // BitmapInfoHeaderまでのバイト数
 }
 
 func (self *IconInfoHeader) Import(bytes []byte) error {
@@ -70,17 +70,17 @@ func (self IconInfoHeader) Export() []byte {
 }
 
 type BitmapInfoHeader struct {
-	BcSize           uint32
-	BcWidth          uint32
-	BcHeight         int32
-	BcPlanes         uint16
-	BcBitCount       uint16
-	BiCompression    uint32
-	BiSizeImage      uint32
-	BiXPixPerMeter   uint32
-	BiYPixPerMeter   uint32
-	BiClrUsed        uint32
-	BiClrImportant   uint32
+	BcSize           uint32  // BitmapInfoHeaderのサイズ
+	BcWidth          uint32  // 画像の幅
+	BcHeight         int32   // 画像の高さ
+	BcPlanes         uint16  // プレーン数 (常に 1)
+	BcBitCount       uint16  // 1画素あたりのビット数
+	BiCompression    uint32  // 圧縮方式 (0 非圧縮)
+	BiSizeImage      uint32  // 画像データ部のサイズ
+	BiXPixPerMeter   uint32  // 横方向解像度 (基本 0)
+	BiYPixPerMeter   uint32  // 縦方向解像度 (基本 0)
+	BiClrUsed        uint32  // パレット数 (使用色数) (基本 0)
+	BiClrImportant   uint32  // 重要なパレットのインデックス (基本 0)
 }
 
 func (self *BitmapInfoHeader) Import(bytes []byte) error {
@@ -118,10 +118,10 @@ func (self BitmapInfoHeader) Export() []byte {
 }
 
 type Palette struct {
-	Blue      uint8
-	Green     uint8
-	Red       uint8
-	Reserved  uint8
+	Blue      uint8  // 青
+	Green     uint8  // 緑
+	Red       uint8  // 赤
+	Reserved  uint8  // 予約領域 常に0
 }
 
 func (self *Palette) Import(bytes []byte) error {

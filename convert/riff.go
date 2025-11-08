@@ -34,6 +34,7 @@ func (self *Riff) Import(bytes []byte) error {
 		remains = remains[1:]
 		
 		if remain.Parent < 0 {
+			// RIFFチャンク(ルートチャンク)を読み込む
 			chunk := Chunk{}
 			chunk.ChunkID = [4]byte(remain.RemainBytes[:4])
 			chunk.DataSize = uint32(binary.LittleEndian.Uint32(remain.RemainBytes[4:8]))
@@ -45,9 +46,11 @@ func (self *Riff) Import(bytes []byte) error {
 			}
 			self.Chunks = []Chunk{chunk}
 		} else {
+			// 親チャンクを取得
 			parentIndex := remain.Parent
 			parent := &self.Chunks[parentIndex]
 			
+			// 新しいチャンクを作成
 			chunkIndex := (int32)(len(self.Chunks))
 			chunk := Chunk{}
 			chunk.ChunkID = [4]byte(remain.RemainBytes[:4])
@@ -61,6 +64,7 @@ func (self *Riff) Import(bytes []byte) error {
 			parent.SubChunks = append(parent.SubChunks, chunkIndex)
 			self.Chunks = append(self.Chunks, chunk)
 			
+			// 未使用バイト列があれば、次のチャンク読み取りを追加
 			remain_bytes := remain.RemainBytes[8 + chunk.DataSize:]
 			if len(remain_bytes) > 0 {
 				remains = append(remains, chunkReadData{Parent: parentIndex, RemainBytes: remain_bytes})
@@ -85,6 +89,7 @@ func (self Riff) Export() []byte {
 	return bytes
 }
 
+// チャンクを再起的に標準出力へ
 func (self Riff) printChunk(index int32, indent int32) {
 	chunk := &self.Chunks[index]
 	indentString := strings.Repeat("  ", int(indent))
@@ -95,6 +100,7 @@ func (self Riff) printChunk(index int32, indent int32) {
 	}
 }
 
+// チャンク情報を標準出力へ
 func (self Riff) Print() {
 	self.printChunk(0, 0)
 }

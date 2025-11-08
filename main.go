@@ -41,7 +41,7 @@ func main() {
 		}
 	}
 	
-	bytes, err = convert.ConvertImageDataToIcon(imageData, convert.CursorResource)
+	bytes, err = convert.ConvertImageDataToIcon(imageData, convert.CursorResource, 16, 16)
 	if err != nil { panic(err) }
 	err = os.WriteFile("img/icon.ico", bytes, 0644)
 	if err != nil { panic(err) }

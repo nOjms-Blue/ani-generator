@@ -35,8 +35,8 @@ type IconInfoHeader struct {
 	Height           uint8   // アイコンの高さ
 	ColorCount       uint8   // 使用する色数 (256色以上は 0)
 	Reserved1        uint8   // 予約領域 常に0
-	Reserved2        uint16  // 予約領域 (ホットスポット X座標)
-	Reserved3        uint16  // 予約領域 (ホットスポット Y座標)
+	Reserved2        int16   // 予約領域 (ホットスポット X座標)
+	Reserved3        int16   // 予約領域 (ホットスポット Y座標)
 	IcoDIBSize       uint32  // アイコンのサイズ
 	IcoDIBOffset     uint32  // BitmapInfoHeaderまでのバイト数
 }
@@ -49,8 +49,8 @@ func (self *IconInfoHeader) Import(bytes []byte) error {
 	self.Height = bytes[1]
 	self.ColorCount = bytes[2]
 	self.Reserved1 = bytes[3]
-	self.Reserved2 = binary.LittleEndian.Uint16(bytes[4:6])
-	self.Reserved3 = binary.LittleEndian.Uint16(bytes[6:8])
+	self.Reserved2 = int16(binary.LittleEndian.Uint16(bytes[4:6]))
+	self.Reserved3 = int16(binary.LittleEndian.Uint16(bytes[6:8]))
 	self.IcoDIBSize = binary.LittleEndian.Uint32(bytes[8:12])
 	self.IcoDIBOffset = binary.LittleEndian.Uint32(bytes[12:16])
 	return nil
@@ -62,8 +62,8 @@ func (self IconInfoHeader) Export() []byte {
 	bytes[1] = self.Height
 	bytes[2] = self.ColorCount
 	bytes[3] = self.Reserved1
-	binary.LittleEndian.PutUint16(bytes[4:6], self.Reserved2)
-	binary.LittleEndian.PutUint16(bytes[6:8], self.Reserved3)
+	binary.LittleEndian.PutUint16(bytes[4:6], uint16(self.Reserved2))
+	binary.LittleEndian.PutUint16(bytes[6:8], uint16(self.Reserved3))
 	binary.LittleEndian.PutUint32(bytes[8:12], self.IcoDIBSize)
 	binary.LittleEndian.PutUint32(bytes[12:16], self.IcoDIBOffset)
 	return bytes

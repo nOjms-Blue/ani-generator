@@ -13,7 +13,7 @@ const (
 	CursorResource ResourceType = 2  // カーソル
 )
 
-func ConvertImageDataToIcon(image loader.ImageData, resourceType ResourceType) ([]byte, error) {
+func ConvertImageDataToIcon(image loader.ImageData, resourceType ResourceType, hotSpotX int16, hotSpotY int16) ([]byte, error) {
 	// 画像の幅と高さは32, 64, 128, 256のみサポート
 	if image.Width != 32 && image.Width != 64 && image.Width != 128 && image.Width != 256 {
 		return nil, errors.New("unsupported image width")
@@ -32,8 +32,8 @@ func ConvertImageDataToIcon(image loader.ImageData, resourceType ResourceType) (
 		Height: uint8(image.Height),
 		ColorCount: 0,
 		Reserved1: 0,
-		Reserved2: 0,
-		Reserved3: 0,
+		Reserved2: hotSpotX,
+		Reserved3: hotSpotY,
 		IcoDIBSize: 0,
 		IcoDIBOffset: uint32(unsafe.Sizeof(IconFileHeader{}) + unsafe.Sizeof(IconInfoHeader{})),
 	}

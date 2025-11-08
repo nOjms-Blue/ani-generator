@@ -26,7 +26,23 @@ func main() {
 	if err != nil { panic(err) }
 	riff.Print()
 	
-	exportedBytes := riff.Export()
-	err = os.WriteFile("img/export.ani", exportedBytes, 0644)
+	icoCount := 0
+	checkBytes := []byte{}
+	for _, chunk := range riff.Chunks {
+		if chunk.ChunkID == [4]byte{'i', 'c', 'o', 'n'} {
+			err = os.WriteFile(fmt.Sprintf("img/icon-%d.ico", icoCount + 1), chunk.Data, 0644)
+			if err != nil { panic(err) }
+			
+			if icoCount == 0 {
+				checkBytes = make([]byte, len(chunk.Data))
+				copy(checkBytes, chunk.Data)
+			}
+			icoCount++
+		}
+	}
+	
+	bytes, err = convert.ConvertImageDataToIcon(imageData, convert.CursorResource)
+	if err != nil { panic(err) }
+	err = os.WriteFile("img/icon.ico", bytes, 0644)
 	if err != nil { panic(err) }
 }

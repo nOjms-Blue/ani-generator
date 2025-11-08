@@ -22,7 +22,11 @@ func main() {
 	bytes, err := os.ReadFile(os.Args[2])
 	if err != nil { panic(err) }
 	riff := convert.Riff{}
-	err = riff.Read(bytes)
+	err = riff.Import(bytes)
 	if err != nil { panic(err) }
 	riff.Print()
+	
+	exportedBytes := riff.Export()
+	err = os.WriteFile("img/export.ani", exportedBytes, 0644)
+	if err != nil { panic(err) }
 }

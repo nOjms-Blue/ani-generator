@@ -24,7 +24,7 @@ type chunkReadData struct {
 	RemainBytes []byte
 }
 
-func (self *Riff) Read(bytes []byte) error {
+func (self *Riff) Import(bytes []byte) error {
 	var remains []chunkReadData = []chunkReadData{
 		{Parent: -1, RemainBytes: bytes},
 	}
@@ -68,6 +68,21 @@ func (self *Riff) Read(bytes []byte) error {
 		}
 	}
 	return nil
+}
+
+func (self Riff) exportChunk(index int32) []byte {
+	var bytes []byte = []byte{self.Chunks[index].ChunkID[0], self.Chunks[index].ChunkID[1], self.Chunks[index].ChunkID[2], self.Chunks[index].ChunkID[3], 0, 0, 0, 0}
+	binary.LittleEndian.PutUint32(bytes[4:8], uint32(self.Chunks[index].DataSize))
+	bytes = append(bytes, self.Chunks[index].Data...)
+	for _, subChunkIndex := range self.Chunks[index].SubChunks {
+		bytes = append(bytes, self.exportChunk(subChunkIndex)...)
+	}
+	return bytes
+}
+func (self Riff) Export() []byte {
+	var bytes []byte = []byte{}
+	bytes = append(bytes, self.exportChunk(0)...)
+	return bytes
 }
 
 func (self Riff) printChunk(index int32, indent int32) {

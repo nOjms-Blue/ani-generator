@@ -13,7 +13,7 @@ import (
 )
 
 
-func getRgbAt(img image.Image, x int, y int) (r uint8, g uint8, b uint8, a uint8) {
+func getRgbaAt(img image.Image, x int, y int) (r uint8, g uint8, b uint8, a uint8) {
 	c := img.At(x, y)
 	rgba := color.RGBAModel.Convert(c).(color.RGBA)
 	return rgba.R, rgba.G, rgba.B, rgba.A
@@ -39,7 +39,7 @@ func LoadImage(path string) (ImageData, error) {
 	
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
-			r, g, b, a := getRgbAt(img, x, y)
+			r, g, b, a := getRgbaAt(img, x, y)
 			imageData.SetPixel(int64(x), int64(y), PixelData{R: r, G: g, B: b, A: a})
 		}
 	}

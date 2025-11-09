@@ -1,7 +1,6 @@
 package convert
 
 import (
-	"time"
 	"errors"
 	"unsafe"
 	"encoding/binary"
@@ -10,14 +9,7 @@ import (
 )
 
 
-type AniInfo struct {
-	Name string  // INAM Chunk
-	Artist string  // IART Chunk
-	Copyright string  // ICOP Chunk
-	Comment string  // ICMT Chunk
-}
-
-func ConvertToAni(resourceType ResourceType, images []loader.ImageData, hotSpotX []int16, hotSpotY []int16, frameIndexes []Sequence, rates []Rate, info *AniInfo) ([]byte, error) {
+func ConvertToAni(resourceType ResourceType, images []loader.ImageData, hotSpotX []int16, hotSpotY []int16, frameIndexes []Sequence, rates []Rate) ([]byte, error) {
 	// バリデーション
 	if len(images) == 0 {
 		return nil, errors.New("images must not be empty")
@@ -95,77 +87,5 @@ func ConvertToAni(resourceType ResourceType, images []loader.ImageData, hotSpotX
 		riff.Chunks[2].SubChunks = append(riff.Chunks[2].SubChunks, int32(len(riff.Chunks) - 1))
 	}
 	
-	infoChunks := []Chunk{}
-	if info != nil {
-		if info.Name != "" {
-			infoChunks = append(infoChunks, Chunk{
-				ChunkID: [4]byte{'I', 'N', 'A', 'M'},
-				DataSize: uint32(len(info.Name) + 1),
-				SubChunks: []int32{},
-				Data: []byte(info.Name + "\x00"),
-			})
-		}
-		if info.Artist != "" {
-			infoChunks = append(infoChunks, Chunk{
-				ChunkID: [4]byte{'I', 'A', 'R', 'T'},
-				DataSize: uint32(len(info.Artist) + 1),
-				SubChunks: []int32{},
-				Data: []byte(info.Artist + "\x00"),
-			})
-		}
-		if info.Copyright != "" {
-			infoChunks = append(infoChunks, Chunk{
-				ChunkID: [4]byte{'I', 'C', 'O', 'P'},
-				DataSize: uint32(len(info.Copyright) + 1),
-				SubChunks: []int32{},
-				Data: []byte(info.Copyright + "\x00"),
-			})
-		}
-		if info.Comment != "" {
-			infoChunks = append(infoChunks, Chunk{
-				ChunkID: [4]byte{'I', 'C', 'M', 'T'},
-				DataSize: uint32(len(info.Comment) + 1),
-				SubChunks: []int32{},
-				Data: []byte(info.Comment + "\x00"),
-			})
-		}
-	}
-	today := time.Now().Format("2006-01-02") + "\x00"
-	softwareName := "AniConvert (temporary)" + "\x00"
-	infoChunks = append(infoChunks, Chunk{
-		ChunkID: [4]byte{'I', 'S', 'F', 'T'},
-		DataSize: uint32(len(softwareName)),
-		SubChunks: []int32{},
-		Data: []byte(softwareName),
-	})
-	infoChunks = append(infoChunks, Chunk{
-		ChunkID: [4]byte{'I', 'C', 'R', 'D'},
-		DataSize: uint32(len(today)),
-		SubChunks: []int32{},
-		Data: []byte(today),
-	})
-	infoChunks = append(infoChunks, Chunk{
-		ChunkID: [4]byte{'I', 'E', 'N', 'R'},
-		DataSize: uint32(len("nOjms-Blue") + 1),
-		SubChunks: []int32{},
-		Data: []byte("nOjms-Blue" + "\x00"),
-	})
-	
-	infoListSize := uint32(4)
-	for _, infoChunk := range infoChunks {
-		infoListSize += 8 + infoChunk.DataSize
-	}
-	riff.Chunks = append(riff.Chunks, Chunk{
-		ChunkID: [4]byte{'L', 'I', 'S', 'T'},
-		DataSize: infoListSize,
-		SubChunks: []int32{},
-		Data: []byte{'I', 'N', 'F', 'O'},
-	})
-	infoListChunkIndex := int32(len(riff.Chunks) - 1)
-	riff.Chunks[0].SubChunks = append(riff.Chunks[0].SubChunks, infoListChunkIndex)
-	for _, infoChunk := range infoChunks {
-		riff.Chunks = append(riff.Chunks, infoChunk)
-		riff.Chunks[infoListChunkIndex].SubChunks = append(riff.Chunks[infoListChunkIndex].SubChunks, int32(len(riff.Chunks) - 1))
-	}
 	return riff.Export(), nil
 }

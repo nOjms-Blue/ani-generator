@@ -1,9 +1,9 @@
-package convert
+package generator
 
 import (
 	"errors"
 	"unsafe"
-	"ani-converter/loader"
+	"ani-generator/loader"
 )
 
 

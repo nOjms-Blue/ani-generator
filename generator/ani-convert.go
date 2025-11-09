@@ -1,11 +1,11 @@
-package convert
+package generator
 
 import (
 	"errors"
 	"unsafe"
 	"encoding/binary"
 	
-	"ani-converter/loader"
+	"ani-generator/loader"
 )
 
 

@@ -5,9 +5,9 @@ import (
 	"os"
 	"strconv"
 	
-	"ani-converter/loader"
-	"ani-converter/convert"
-	"ani-converter/cli"
+	"ani-generator/settings"
+	"ani-generator/loader"
+	"ani-generator/generator"
 )
 
 
@@ -19,8 +19,8 @@ func main() {
 	var rates []uint32
 	var outputAniPath string
 	
-	optionSettings := cli.OptionSettings{
-		KeySettings: []cli.OptionKeySetting{
+	optionSettings := settings.OptionSettings{
+		KeySettings: []settings.OptionKeySetting{
 			{ LongKey: "input", ShortKey: "i", Required: false, Flag: false, Multiple: true, Description: "input image files", Example: "--input input.png" },
 			{ LongKey: "output", ShortKey: "o", Required: false, Flag: false, Multiple: false, Description: "output ani file", Example: "--output output.ani" },
 			{ LongKey: "hotSpotX", ShortKey: "hx", Required: false, Flag: false, Multiple: true, Description: "hot spot x coordinates", Example: "--hotSpotX 10 --hotSpotX 12" },
@@ -29,17 +29,17 @@ func main() {
 			{ LongKey: "rate", ShortKey: "r", Required: false, Flag: false, Multiple: true, Description: "frame rates (1/60s)", Example: "--rate 10 --rate 12" },
 			{ LongKey: "json", ShortKey: "", Required: false, Flag: false, Multiple: false, Description: "apply settings from json file", Example: "--json settings.json" },
 		},
-		NoKeySettings: []cli.OptionNoKeySetting{},
+		NoKeySettings: []settings.OptionNoKeySetting{},
 	}
-	checkResult, err := cli.CheckArguments(os.Args[1:], optionSettings)
+	checkResult, err := settings.CheckArguments(os.Args[1:], optionSettings)
 	if err != nil {
 		fmt.Println("Error: ", err)
-		cli.PrintHelp(optionSettings)
+		settings.PrintHelp(optionSettings)
 		os.Exit(0)
 	}
 	
 	if json, ok := checkResult.KeyValues["json"]; ok {
-		settings, err := cli.LoadSettingsJson(json[0])
+		settings, err := settings.LoadSettingsJson(json[0])
 		if err != nil {
 			fmt.Println("Error: ", err)
 			os.Exit(1)
@@ -66,6 +66,7 @@ func main() {
 		inputImages, ok := checkResult.KeyValues["input"]
 		if !ok {
 			fmt.Println("Error: input images are not set")
+			settings.PrintHelp(optionSettings)
 			os.Exit(0)
 		}
 		images = []loader.ImageData{}
@@ -73,6 +74,7 @@ func main() {
 			image, err := loader.LoadImage(inputImage)
 			if err != nil {
 				fmt.Println("Error: ", err)
+				settings.PrintHelp(optionSettings)
 				os.Exit(0)
 			}
 			images = append(images, image)
@@ -82,10 +84,12 @@ func main() {
 		outputAnis, ok := checkResult.KeyValues["output"]
 		if !ok {
 			fmt.Println("Error: output ani file is not set")
+			settings.PrintHelp(optionSettings)
 			os.Exit(0)
 		}
 		if len(outputAnis) == 0 {
 			fmt.Println("Error: output ani file is not set")
+			settings.PrintHelp(optionSettings)
 			os.Exit(0)
 		}
 		outputAniPath = outputAnis[0]
@@ -94,11 +98,13 @@ func main() {
 		hotSpotXStrings, ok := checkResult.KeyValues["hotSpotX"]
 		if !ok {
 			fmt.Println("Error: hot spot x coordinates are not set")
+			settings.PrintHelp(optionSettings)
 			os.Exit(0)
 		}
 		hotSpotYStrings, ok := checkResult.KeyValues["hotSpotY"]
 		if !ok {
 			fmt.Println("Error: hot spot y coordinates are not set")
+			settings.PrintHelp(optionSettings)
 			os.Exit(0)
 		}
 		hotSpotXs = []int16{}
@@ -106,6 +112,7 @@ func main() {
 			hotSpotX, err := strconv.ParseInt(hotSpotXString, 10, 16)
 			if err != nil {
 				fmt.Println("Error: ", err)
+				settings.PrintHelp(optionSettings)
 				os.Exit(0)
 			}
 			hotSpotXs = append(hotSpotXs, int16(hotSpotX))
@@ -115,6 +122,7 @@ func main() {
 			hotSpotY, err := strconv.ParseInt(hotSpotYString, 10, 16)
 			if err != nil {
 				fmt.Println("Error: ", err)
+				settings.PrintHelp(optionSettings)
 				os.Exit(0)
 			}
 			hotSpotYs = append(hotSpotYs, int16(hotSpotY))
@@ -124,6 +132,7 @@ func main() {
 		frameIndexStrings, ok := checkResult.KeyValues["frameIndex"]
 		if !ok {
 			fmt.Println("Error: frame indexes are not set")
+			settings.PrintHelp(optionSettings)
 			os.Exit(0)
 		}
 		frameIndexes = []uint32{}
@@ -131,6 +140,7 @@ func main() {
 			frameIndex, err := strconv.ParseInt(frameIndexString, 10, 32)
 			if err != nil {
 				fmt.Println("Error: ", err)
+				settings.PrintHelp(optionSettings)
 				os.Exit(0)
 			}
 			frameIndexes = append(frameIndexes, uint32(frameIndex))
@@ -140,6 +150,7 @@ func main() {
 		rateStrings, ok := checkResult.KeyValues["rate"]
 		if !ok {
 			fmt.Println("Error: frame rates are not set")
+			settings.PrintHelp(optionSettings)
 			os.Exit(0)
 		}
 		rates = []uint32{}
@@ -147,6 +158,7 @@ func main() {
 			rate, err := strconv.ParseUint(rateString, 10, 32)
 			if err != nil {
 				fmt.Println("Error: ", err)
+				settings.PrintHelp(optionSettings)
 				os.Exit(0)
 			}
 			rates = append(rates, uint32(rate))
@@ -154,7 +166,7 @@ func main() {
 	}
 	
 	// アニメーションの作成
-	ani, err := convert.ConvertToAni(convert.IconResource, images, hotSpotXs, hotSpotYs, frameIndexes, rates)
+	ani, err := generator.ConvertToAni(generator.IconResource, images, hotSpotXs, hotSpotYs, frameIndexes, rates)
 	if err != nil {
 		fmt.Println("Error: ", err)
 		os.Exit(1)

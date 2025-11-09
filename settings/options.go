@@ -1,4 +1,4 @@
-package cli
+package settings
 
 
 type OptionKeySetting struct {

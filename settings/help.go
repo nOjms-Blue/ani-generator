@@ -1,4 +1,4 @@
-package cli
+package settings
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 
 func PrintHelp(settings OptionSettings) {
 	fmt.Println("Usage:")
-	fmt.Printf("  ani-converter ")
+	fmt.Printf("  ani-generator ")
 	for _, setting := range settings.NoKeySettings {
 		if (setting.Required) {
 			fmt.Printf("%s ", setting.Name)

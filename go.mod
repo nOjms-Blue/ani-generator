@@ -1,4 +1,4 @@
-module ani-converter
+module ani-generator
 
 go 1.25.0
 

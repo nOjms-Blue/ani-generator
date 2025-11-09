@@ -11,6 +11,8 @@ import (
 )
 
 
+const VERSION = "1.0.0"
+
 func main() {
 	var images []loader.ImageData
 	var hotSpotXs []int16
@@ -18,6 +20,11 @@ func main() {
 	var frameIndexes []uint32
 	var rates []uint32
 	var outputAniPath string
+	
+	fmt.Printf("ani-generator %s\n", VERSION)
+	fmt.Println("Copyright (c) 2025 nOjms-Blue")
+	fmt.Println("https://github.com/nOjms-Blue/ani-generator")
+	fmt.Println()
 	
 	optionSettings := settings.OptionSettings{
 		KeySettings: []settings.OptionKeySetting{

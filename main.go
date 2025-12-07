@@ -173,7 +173,7 @@ func main() {
 	}
 	
 	// アニメーションの作成
-	ani, err := generator.ConvertToAni(generator.IconResource, images, hotSpotXs, hotSpotYs, frameIndexes, rates)
+	ani, err := generator.ConvertToAni(generator.CursorResource, images, hotSpotXs, hotSpotYs, frameIndexes, rates)
 	if err != nil {
 		fmt.Println("Error: ", err)
 		os.Exit(1)

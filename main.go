@@ -30,6 +30,7 @@ func main() {
 		KeySettings: []settings.OptionKeySetting{
 			{ LongKey: "input", ShortKey: "i", Required: false, Flag: false, Multiple: true, Description: "input image files", Example: "--input input.png" },
 			{ LongKey: "output", ShortKey: "o", Required: false, Flag: false, Multiple: false, Description: "output ani file", Example: "--output output.ani" },
+			{ LongKey: "icon", ShortKey: "c", Required: false, Flag: true, Multiple: false, Description: "change resource type to icon", Example: "--icon"},
 			{ LongKey: "hotSpotX", ShortKey: "hx", Required: false, Flag: false, Multiple: true, Description: "hot spot x coordinates", Example: "--hotSpotX 10 --hotSpotX 12" },
 			{ LongKey: "hotSpotY", ShortKey: "hy", Required: false, Flag: false, Multiple: true, Description: "hot spot y coordinates", Example: "--hotSpotY 10 --hotSpotY 12" },
 			{ LongKey: "frameIndex", ShortKey: "f", Required: false, Flag: false, Multiple: true, Description: "frame indexes", Example: "--frameIndex 0 --frameIndex 1" },
@@ -45,11 +46,22 @@ func main() {
 		os.Exit(0)
 	}
 	
+	// リソースタイプを取得
+	resource := generator.CursorResource
+	if checkResult.KeyFlags["icon"] != 0 { resource = generator.IconResource }
+	
 	if json, ok := checkResult.KeyValues["json"]; ok {
 		settings, err := settings.LoadSettingsJson(json[0])
 		if err != nil {
 			fmt.Println("Error: ", err)
 			os.Exit(1)
+		}
+		
+		// リソースタイプを取得
+		if settings.ResourceType == "cursor" {
+			resource = generator.CursorResource
+		} else if settings.ResourceType == "icon" {
+			resource = generator.IconResource
 		}
 		
 		for _, imageSetting := range settings.Images {
@@ -102,37 +114,44 @@ func main() {
 		outputAniPath = outputAnis[0]
 		
 		// ホットスポットの読み込み
-		hotSpotXStrings, ok := checkResult.KeyValues["hotSpotX"]
-		if !ok {
-			fmt.Println("Error: hot spot x coordinates are not set")
-			settings.PrintHelp(optionSettings)
-			os.Exit(0)
-		}
-		hotSpotYStrings, ok := checkResult.KeyValues["hotSpotY"]
-		if !ok {
-			fmt.Println("Error: hot spot y coordinates are not set")
-			settings.PrintHelp(optionSettings)
-			os.Exit(0)
-		}
-		hotSpotXs = []int16{}
-		for _, hotSpotXString := range hotSpotXStrings {
-			hotSpotX, err := strconv.ParseInt(hotSpotXString, 10, 16)
-			if err != nil {
-				fmt.Println("Error: ", err)
+		if resource == generator.CursorResource {
+			hotSpotXStrings, ok := checkResult.KeyValues["hotSpotX"]
+			if !ok {
+				fmt.Println("Error: hot spot x coordinates are not set")
 				settings.PrintHelp(optionSettings)
 				os.Exit(0)
 			}
-			hotSpotXs = append(hotSpotXs, int16(hotSpotX))
-		}
-		hotSpotYs = []int16{}
-		for _, hotSpotYString := range hotSpotYStrings {
-			hotSpotY, err := strconv.ParseInt(hotSpotYString, 10, 16)
-			if err != nil {
-				fmt.Println("Error: ", err)
+			hotSpotYStrings, ok := checkResult.KeyValues["hotSpotY"]
+			if !ok {
+				fmt.Println("Error: hot spot y coordinates are not set")
 				settings.PrintHelp(optionSettings)
 				os.Exit(0)
 			}
-			hotSpotYs = append(hotSpotYs, int16(hotSpotY))
+			hotSpotXs = []int16{}
+			for _, hotSpotXString := range hotSpotXStrings {
+				hotSpotX, err := strconv.ParseInt(hotSpotXString, 10, 16)
+				if err != nil {
+					fmt.Println("Error: ", err)
+					settings.PrintHelp(optionSettings)
+					os.Exit(0)
+				}
+				hotSpotXs = append(hotSpotXs, int16(hotSpotX))
+			}
+			hotSpotYs = []int16{}
+			for _, hotSpotYString := range hotSpotYStrings {
+				hotSpotY, err := strconv.ParseInt(hotSpotYString, 10, 16)
+				if err != nil {
+					fmt.Println("Error: ", err)
+					settings.PrintHelp(optionSettings)
+					os.Exit(0)
+				}
+				hotSpotYs = append(hotSpotYs, int16(hotSpotY))
+			}
+		} else {
+			for i := 0; i < len(images); i++ {
+				hotSpotXs = append(hotSpotXs, int16(0))
+				hotSpotYs = append(hotSpotYs, int16(0))
+			}
 		}
 		
 		// フレームインデックスの読み込み
@@ -173,7 +192,7 @@ func main() {
 	}
 	
 	// アニメーションの作成
-	ani, err := generator.ConvertToAni(generator.CursorResource, images, hotSpotXs, hotSpotYs, frameIndexes, rates)
+	ani, err := generator.ConvertToAni(resource, images, hotSpotXs, hotSpotYs, frameIndexes, rates)
 	if err != nil {
 		fmt.Println("Error: ", err)
 		os.Exit(1)

@@ -18,6 +18,7 @@ type SettingsJson struct {
 	FrameIndexes []uint32           `json:"frameIndexes"`
 	Rates        []uint32           `json:"rates"`
 	Output       string             `json:"output"`
+	ResourceType string             `json:"resourceType"`
 }
 
 func LoadSettingsJson(path string) (SettingsJson, error) {
@@ -43,6 +44,9 @@ func LoadSettingsJson(path string) (SettingsJson, error) {
 	}
 	if settings.Output == "" {
 		return SettingsJson{}, errors.New("output is not set")
+	}
+	if settings.ResourceType != "" && settings.ResourceType != "cursor" && settings.ResourceType != "icon" {
+		return SettingsJson{}, errors.New("invalid resource type")
 	}
 	return settings, nil
 }

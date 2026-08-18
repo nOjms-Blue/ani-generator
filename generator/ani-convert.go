@@ -1,16 +1,19 @@
 package generator
 
 import (
-	"errors"
-	"unsafe"
 	"encoding/binary"
-	
+	"errors"
+	"fmt"
+	"unsafe"
+
 	"ani-generator/loader"
 )
 
-
 func ConvertToAni(resourceType ResourceType, images []loader.ImageData, hotSpotX []int16, hotSpotY []int16, frameIndexes []Sequence, rates []Rate) ([]byte, error) {
 	// バリデーション
+	if resourceType != IconResource && resourceType != CursorResource {
+		return nil, errors.New("invalid resource type")
+	}
 	if len(images) == 0 {
 		return nil, errors.New("images must not be empty")
 	}
@@ -26,66 +29,73 @@ func ConvertToAni(resourceType ResourceType, images []loader.ImageData, hotSpotX
 	if len(frameIndexes) != len(rates) {
 		return nil, errors.New("frameIndexes and rates must have the same length")
 	}
-	
-	aniHeader := AniHeader{
-		Size: uint32(unsafe.Sizeof(AniHeader{})),
-		Frames: uint32(len(images)),
-		Steps: uint32(len(frameIndexes)),
-		Width: 0,
-		Height: 0,
-		BitDepth: 0,
-		Planes: 0,
-		DefaultRate: rates[0],
-		Flags: 0b00000000000000000000000000000011,
+	for i, frameIndex := range frameIndexes {
+		if uint64(frameIndex) >= uint64(len(images)) {
+			return nil, fmt.Errorf("frameIndexes[%d] is out of range: %d", i, frameIndex)
+		}
 	}
-	
+
+	aniHeader := AniHeader{
+		Size:        uint32(unsafe.Sizeof(AniHeader{})),
+		Frames:      uint32(len(images)),
+		Steps:       uint32(len(frameIndexes)),
+		Width:       0,
+		Height:      0,
+		BitDepth:    0,
+		Planes:      0,
+		DefaultRate: rates[0],
+		Flags:       0b00000000000000000000000000000011,
+	}
+
 	imagesBytesSize := uint32(0)
 	imagesBytes := make([][]byte, len(images))
 	for i, image := range images {
 		hsX := hotSpotX[i]
 		hsY := hotSpotY[i]
-		
+
 		bytes, err := ConvertImageDataToIcon(image, resourceType, hsX, hsY)
-		if err != nil { return nil, err }
+		if err != nil {
+			return nil, err
+		}
 		imagesBytes[i] = bytes
 		imagesBytesSize += uint32(len(bytes))
 	}
-	
-	ratesBytes := make([]byte, len(rates) * 4)
+
+	ratesBytes := make([]byte, len(rates)*4)
 	for i, rate := range rates {
 		binary.LittleEndian.PutUint32(ratesBytes[i*4:i*4+4], rate)
 	}
-	
-	seqBytes := make([]byte, len(frameIndexes) * 4)
+
+	seqBytes := make([]byte, len(frameIndexes)*4)
 	for i, frameIndex := range frameIndexes {
 		binary.LittleEndian.PutUint32(seqBytes[i*4:i*4+4], uint32(frameIndex))
 	}
-	
+
 	anihSize := uint32(unsafe.Sizeof(aniHeader))
-	listSize := 4 + uint32(len(images)) * 8 + imagesBytesSize
+	listSize := 4 + uint32(len(images))*8 + imagesBytesSize
 	rateSize := uint32(len(ratesBytes))
 	seqSize := uint32(len(seqBytes))
 	riffSize := (8 + anihSize) + (8 + listSize) + (8 + rateSize) + (8 + seqSize)
 	riff := Riff{
 		Chunks: []Chunk{
-			{ ChunkID: [4]byte{'R', 'I', 'F', 'F'}, DataSize: riffSize, SubChunks: []int32{1, 2, 3, 4}, Data: []byte{'A', 'C', 'O', 'N'} },
-			{ ChunkID: [4]byte{'a', 'n', 'i', 'h'}, DataSize: anihSize, SubChunks: []int32{}, Data: aniHeader.Export() },
-			{ ChunkID: [4]byte{'L', 'I', 'S', 'T'}, DataSize: listSize, SubChunks: []int32{}, Data: []byte{'f', 'r', 'a', 'm'} },
-			{ ChunkID: [4]byte{'r', 'a', 't', 'e'}, DataSize: rateSize, SubChunks: []int32{}, Data: ratesBytes },
-			{ ChunkID: [4]byte{'s', 'e', 'q', ' '}, DataSize: seqSize, SubChunks: []int32{}, Data: seqBytes },
+			{ChunkID: [4]byte{'R', 'I', 'F', 'F'}, DataSize: riffSize, SubChunks: []int32{1, 2, 3, 4}, Data: []byte{'A', 'C', 'O', 'N'}},
+			{ChunkID: [4]byte{'a', 'n', 'i', 'h'}, DataSize: anihSize, SubChunks: []int32{}, Data: aniHeader.Export()},
+			{ChunkID: [4]byte{'L', 'I', 'S', 'T'}, DataSize: listSize, SubChunks: []int32{}, Data: []byte{'f', 'r', 'a', 'm'}},
+			{ChunkID: [4]byte{'r', 'a', 't', 'e'}, DataSize: rateSize, SubChunks: []int32{}, Data: ratesBytes},
+			{ChunkID: [4]byte{'s', 'e', 'q', ' '}, DataSize: seqSize, SubChunks: []int32{}, Data: seqBytes},
 		},
 	}
 	for _, imageBytes := range imagesBytes {
 		chunk := Chunk{
-			ChunkID: [4]byte{'i', 'c', 'o', 'n'},
-			DataSize: uint32(len(imageBytes)),
+			ChunkID:   [4]byte{'i', 'c', 'o', 'n'},
+			DataSize:  uint32(len(imageBytes)),
 			SubChunks: []int32{},
-			Data: imageBytes,
+			Data:      imageBytes,
 		}
-		
+
 		riff.Chunks = append(riff.Chunks, chunk)
-		riff.Chunks[2].SubChunks = append(riff.Chunks[2].SubChunks, int32(len(riff.Chunks) - 1))
+		riff.Chunks[2].SubChunks = append(riff.Chunks[2].SubChunks, int32(len(riff.Chunks)-1))
 	}
-	
+
 	return riff.Export(), nil
 }
